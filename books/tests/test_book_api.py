@@ -32,7 +32,7 @@ def get_detail(book_id: int) -> str:
 class BookAPITests(TestCase):
     def setUp(self) -> None:
         self.user = get_user_model().objects.create(
-            email="user",
+            email="user@test.com",
             password="test"
         )
         self.client = APIClient()
