@@ -7,7 +7,11 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from books.models import Book
-from books.serializers import BookListSerializer, BookSerializer
+from books.serializers import (
+    BookListSerializer,
+    BookRetrieveSerializer,
+)
+
 
 BOOK_URL = reverse("books:book-list")
 
@@ -50,7 +54,7 @@ class UnAuthenticatedBookAPITests(TestCase):
         book = sample_book()
 
         response = self.client.get(get_detail(book.id))
-        serializer = BookSerializer(book)
+        serializer = BookRetrieveSerializer(book)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
@@ -115,8 +119,7 @@ class AdminBookAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         for key in self.payload:
-            if key != "cover":
-                self.assertEqual(self.payload[key], getattr(book, key))
+            self.assertEqual(self.payload[key], getattr(book, key))
 
     def test_update_book(self):
         self.payload["title"] = "Book title put"
