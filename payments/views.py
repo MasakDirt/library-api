@@ -9,11 +9,15 @@ from payments.serializers import (
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.select_related("borrowing__book")
     serializer_class = PaymentSerializer
 
     def get_queryset(self):
         queryset = self.queryset
+        user = self.request.user
+
+        if not user.is_staff:
+            queryset = queryset.filter(borrowing__user=user)
 
         return queryset
 

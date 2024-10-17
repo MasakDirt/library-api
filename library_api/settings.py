@@ -39,14 +39,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    #  3rd apps
+    # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt",
 
-    #  custom apps
-    "books",
+    # Custom apps
     "user",
-    "borrowings"
+    "books",
+    "borrowings",
     "payments",
 ]
 
