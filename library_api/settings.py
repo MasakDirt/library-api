@@ -42,11 +42,12 @@ INSTALLED_APPS = [
     #  3rd apps
     "rest_framework",
     "rest_framework_simplejwt",
-  
+
     #  custom apps
     "books",
     "user",
     "borrowings"
+    "payments",
 ]
 
 MIDDLEWARE = [
