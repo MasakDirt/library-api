@@ -1,7 +1,10 @@
+from datetime import date
+
+
 def validate_borrowing(
-        borrow_date,
-        expected_return_date,
-        error_to_raise
+        borrow_date: date,
+        expected_return_date: date,
+        error_to_raise: type[Exception]
 ) -> None:
     if (
             borrow_date
