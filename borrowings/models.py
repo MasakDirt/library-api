@@ -13,7 +13,7 @@ class Borrowing(models.Model):
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user.email} borrowed {self.book.title}"
 
     def clean(self) -> None:
