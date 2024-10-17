@@ -5,6 +5,7 @@ from books.serializers import BookSerializer
 class BorrowingReadSerializer(serializers.ModelSerializer):
     book = BookSerializer(read_only=True)
 
+
     class Meta:
         model = Borrowing
         fields = [
