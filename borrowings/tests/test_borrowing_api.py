@@ -10,6 +10,7 @@ from books.models import Book
 from borrowings.models import Borrowing
 from datetime import date, timedelta
 
+
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 
 
@@ -71,7 +72,6 @@ class BorrowingTests(TestCase):
             user=self.user, book=self.book,
             expected_return_date=date.today() + timedelta(days=7)
         )
-
         data = {
             "actual_return_date": date.today().isoformat(),
         }
@@ -79,3 +79,19 @@ class BorrowingTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         borrowing.refresh_from_db()
         self.assertEqual(borrowing.actual_return_date, date.today())
+
+    def test_inventory_decrease_on_borrow(self):
+        initial_inventory = self.book.inventory
+        self.borrowing_data = {
+            "book": self.book.id,
+            "expected_return_date": (
+                        date.today() + timedelta(days=7)).isoformat(),
+        }
+        response = self.client.post(
+            BORROWINGS_URL,
+            self.borrowing_data,
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.inventory, initial_inventory - 1)
