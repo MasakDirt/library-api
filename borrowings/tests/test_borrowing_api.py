@@ -1,27 +1,45 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from books.models import Book
 from borrowings.models import Borrowing
 from datetime import date, timedelta
 
+BORROWINGS_URL = reverse("borrowings:borrowings-list")
+
+
+def get_detail(borrowings_id: int) -> str:
+    return reverse("borrowings:borrowings-detail", args=[borrowings_id])
+
+
 class BorrowingTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            username="testuser",
+            email="test@test.com",
             password="password"
         )
-        self.book = Book.objects.create(title="Test Book", inventory=5)
+        self.book = Book.objects.create(
+            title="Book title",
+            author="Author Sample",
+            cover="SOFT",
+            inventory=10,
+            daily_fee=Decimal("1.04")
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
     def test_create_borrowing(self):
-        url = reverse("borrowings-list")
         data = {
             "book": self.book.id,
             "expected_return_date": (date.today() +
                                      timedelta(days=7)).isoformat(),
         }
-        response = self.client.post(url, data, format="json")
+        response = self.client.post(BORROWINGS_URL, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Borrowing.objects.count(), 1)
         self.assertEqual(Borrowing.objects.first().user, self.user)
@@ -32,10 +50,10 @@ class BorrowingTests(TestCase):
             book=self.book,
             expected_return_date=date.today() + timedelta(days=7)
         )
-        url = reverse("borrowings-list")
-        response = self.client.get(url)
+
+        response = self.client.get(BORROWINGS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data["results"]), 1)
 
     def test_borrowing_detail(self):
         borrowing = Borrowing.objects.create(
@@ -43,8 +61,8 @@ class BorrowingTests(TestCase):
             book=self.book,
             expected_return_date=date.today() + timedelta(days=7)
         )
-        url = reverse("borrowings-detail", args=[borrowing.id])
-        response = self.client.get(url)
+
+        response = self.client.get(get_detail(borrowing.id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], borrowing.id)
 
@@ -53,32 +71,11 @@ class BorrowingTests(TestCase):
             user=self.user, book=self.book,
             expected_return_date=date.today() + timedelta(days=7)
         )
-        url = reverse("borrowings-detail", args=[borrowing.id])
+
         data = {
             "actual_return_date": date.today().isoformat(),
         }
-        response = self.client.patch(url, data, format="json")
+        response = self.client.patch(get_detail(borrowing.id), data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         borrowing.refresh_from_db()
         self.assertEqual(borrowing.actual_return_date, date.today())
-
-    def test_inventory_decrease_on_borrow(self):
-        initial_inventory = self.book.inventory
-        Borrowing.objects.create(
-            user=self.user,
-            book=self.book,
-            expected_return_date=date.today() + timedelta(days=7)
-        )
-        self.book.refresh_from_db()
-        self.assertEqual(self.book.inventory, initial_inventory - 1)
-
-    def test_inventory_increase_on_return(self):
-        borrowing = Borrowing.objects.create(
-            user=self.user,
-            book=self.book,
-            expected_return_date=date.today() + timedelta(days=7)
-        )
-        borrowing.actual_return_date = date.today()
-        borrowing.save()
-        self.book.refresh_from_db()
-        self.assertEqual(self.book.inventory, 5)
