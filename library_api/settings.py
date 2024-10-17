@@ -38,12 +38,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     #  3rd apps
     "rest_framework",
     "rest_framework_simplejwt",
+  
     #  custom apps
     "books",
     "user",
+    "borrowings"
 ]
 
 MIDDLEWARE = [
