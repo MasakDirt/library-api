@@ -10,6 +10,7 @@ from books.models import Book
 from borrowings.models import Borrowing
 from datetime import date, timedelta
 
+
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 
 
