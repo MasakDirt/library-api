@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     #  3rd apps
     "rest_framework",
     "rest_framework_simplejwt",
+    "drf_spectacular",
     #  custom apps
     "books",
     "user",
@@ -92,6 +93,20 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "library_api.paginations.LibraryLimitOffsetPagination",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Library API",
+    "DESCRIPTION": "Documentation for Library API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_SETTING": {
+        "deepLinking": True,
+        "defaultModelRendering": "model",
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+    }
 }
 
 # Password validation
