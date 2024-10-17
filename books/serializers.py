@@ -4,11 +4,13 @@ from books.models import Book
 
 
 class BookSerializer(serializers.ModelSerializer):
-    cover = serializers.SerializerMethodField()
-
     class Meta:
         model = Book
         fields = ("id", "title", "author", "cover", "inventory", "daily_fee")
+
+
+class BookRetrieveSerializer(BookSerializer):
+    cover = serializers.SerializerMethodField()
 
     def get_cover(self, obj: Book) -> str:
         return obj.get_cover_display()
