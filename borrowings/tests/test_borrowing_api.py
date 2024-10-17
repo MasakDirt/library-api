@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from books.models import Book
 from borrowings.models import Borrowing
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 
@@ -71,7 +71,6 @@ class BorrowingTests(TestCase):
             user=self.user, book=self.book,
             expected_return_date=date.today() + timedelta(days=7)
         )
-
         data = {
             "actual_return_date": date.today().isoformat(),
         }
