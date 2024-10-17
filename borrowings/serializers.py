@@ -52,3 +52,9 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             book.inventory -= 1
             book.save()
         return borrowing
+
+
+class BorrowingReadAuthenticatedSerializer(BorrowingReadSerializer):
+    class Meta:
+        model = Borrowing
+        exclude = ["user"]
