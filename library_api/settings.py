@@ -45,7 +45,6 @@ INSTALLED_APPS = [
   
     #  custom apps
     "books",
-    "borrowings",
     "user",
     "borrowings"
 ]
