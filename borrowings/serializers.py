@@ -16,7 +16,7 @@ class BorrowingReadSerializer(serializers.ModelSerializer):
             "actual_return_date"
         ]
 
-class BorrowingWriteSerializer(serializers.ModelSerializer):
+class BorrowingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
-        fields = ["book", "expected_return_date", "actual_return_date"]
+        fields = ["id", "book", "expected_return_date", "actual_return_date"]
