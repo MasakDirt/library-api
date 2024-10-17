@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
 from datetime import timedelta
 from pathlib import Path
 
@@ -43,7 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
-  
+
     #  custom apps
     "books",
     "user",
@@ -159,6 +158,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1000),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
     "ROTATE_REFRESH_TOKENS": False,
+
     "ALGORITHM": "HS512",
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
 }
