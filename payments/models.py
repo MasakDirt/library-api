@@ -25,7 +25,15 @@ class Payment(models.Model):
     )
     session_url = models.URLField(max_length=255)
     session_id = models.CharField(max_length=255)
-    money_to_pay = models.DecimalField(decimal_places=2)
+    money_to_pay = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.borrowing} - {self.status}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["borrowing", "session_id"],
+                name="unique_borrowing_session_id"
+            )
+        ]
