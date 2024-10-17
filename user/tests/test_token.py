@@ -4,6 +4,9 @@ from rest_framework.test import APIClient
 from user.models import User
 
 
+TOKEN_URL = reverse("user:token_obtain_pair")
+
+
 class TokenTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -17,7 +20,7 @@ class TokenTests(TestCase):
             "email": "test@test.com",
             "password": "testpass",
         }
-        response = self.client.post(reverse("user:token_obtain_pair"), data)
+        response = self.client.post(TOKEN_URL, data)
         self.assertEqual(response.status_code, 200)
         self.assertIn("access", response.data)
         self.assertIn("refresh", response.data)
@@ -27,10 +30,11 @@ class TokenTests(TestCase):
             "email": "test@test.com",
             "password": "testpass",
         }
-        response = self.client.post(reverse("user:token_obtain_pair"), data)
+        response = self.client.post(TOKEN_URL, data)
         refresh_token = response.data["refresh"]
         response = self.client.post(
-            reverse("user:token_refresh"), {"refresh": refresh_token}
+            reverse("user:token_refresh"),
+            {"refresh": refresh_token}
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("access", response.data)
@@ -40,7 +44,7 @@ class TokenTests(TestCase):
             "email": "test@test.com",
             "password": "testpass",
         }
-        response = self.client.post(reverse("user:token_obtain_pair"), data)
+        response = self.client.post(TOKEN_URL, data)
         access_token = response.data["access"]
         response = self.client.post(
             reverse("user:token_verify"), {"token": access_token}
