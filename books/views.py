@@ -3,7 +3,11 @@ from rest_framework.serializers import ModelSerializer
 
 from books.models import Book
 from books.permissions import IsAdminOrReadOnly
-from books.serializers import BookSerializer, BookListSerializer
+from books.serializers import (
+    BookSerializer,
+    BookListSerializer,
+    BookRetrieveSerializer,
+)
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -16,5 +20,8 @@ class BookViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             serializer = BookListSerializer
+
+        if self.action == "retrieve":
+            serializer = BookRetrieveSerializer
 
         return serializer
