@@ -43,11 +43,12 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
-  
+
     #  custom apps
     "books",
     "user",
     "borrowings"
+    "payments",
 ]
 
 MIDDLEWARE = [
