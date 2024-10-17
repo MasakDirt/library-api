@@ -12,5 +12,5 @@ class Borrowing(models.Model):
     actual_return_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.user.username} borrowed {self.book.title}"
+        return f"{self.user.email} borrowed {self.book.title}"
 
