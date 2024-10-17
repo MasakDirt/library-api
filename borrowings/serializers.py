@@ -7,12 +7,12 @@ from rest_framework.exceptions import ValidationError
 
 from books.models import Book
 from .models import Borrowing
-from books.serializers import BookSerializer
-from .validation import validate_borrowing
+from books.serializers import BookRetrieveSerializer
+from borrowings.validation import validate_borrowing
 
 
 class BorrowingReadSerializer(serializers.ModelSerializer):
-    book = BookSerializer(read_only=True)
+    book = BookRetrieveSerializer(read_only=True)
 
     class Meta:
         model = Borrowing
@@ -24,6 +24,7 @@ class BorrowingReadSerializer(serializers.ModelSerializer):
             "expected_return_date",
             "actual_return_date"
         ]
+
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
     class Meta:
