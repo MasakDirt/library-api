@@ -29,14 +29,9 @@ def get_detail(book_id: int) -> str:
     return reverse("books:book-detail", args=[book_id])
 
 
-class BookAPITests(TestCase):
-    def setUp(self) -> None:
-        self.user = get_user_model().objects.create(
-            email="user@test.com",
-            password="test"
-        )
+class UnAuthenticatedBookAPITests(TestCase):
+    def setUp(self):
         self.client = APIClient()
-        self.client.force_authenticate(self.user)
 
     def test_list_books(self) -> None:
         sample_book()
@@ -49,7 +44,7 @@ class BookAPITests(TestCase):
         serializer = BookListSerializer(books, many=True)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, serializer.data)
+        self.assertEqual(response.data["results"], serializer.data)
 
     def test_book_detail(self) -> None:
         book = sample_book()
@@ -59,3 +54,86 @@ class BookAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
+
+
+class AuthenticatedBookAPITests(TestCase):
+    def setUp(self) -> None:
+        self.user = get_user_model().objects.create(
+            email="user@test.com",
+            password="test"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_create_update_delete_forbidden_books(self) -> None:
+        # create
+        payload = {
+            "title": "Book title",
+            "author": "Author Sample",
+            "cover": "SOFT",
+            "inventory": 10,
+            "daily_fee": Decimal("1.04")
+        }
+
+        res_create = self.client.post(BOOK_URL, payload)
+
+        self.assertEqual(res_create.status_code, status.HTTP_403_FORBIDDEN)
+
+        book = sample_book()
+
+        # update
+        url_update = get_detail(book.id)
+        res_update = self.client.put(url_update, {"title": "test title"})
+        self.assertEqual(res_update.status_code, status.HTTP_403_FORBIDDEN)
+
+        # delete
+        url_delete = get_detail(book.id)
+        res_delete = self.client.delete(url_delete)
+        self.assertEqual(res_delete.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AdminBookAPITests(TestCase):
+    def setUp(self) -> None:
+        self.payload = {
+            "title": "Book title",
+            "author": "Author Sample",
+            "cover": "SOFT",
+            "inventory": 10,
+            "daily_fee": Decimal("1.04")
+        }
+        self.user = get_user_model().objects.create_superuser(
+            email="user@test.com",
+            password="test"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_create_book(self):
+        res = self.client.post(BOOK_URL, self.payload)
+        book = Book.objects.get(id=res.data["id"])
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        for key in self.payload:
+            if key != "cover":
+                self.assertEqual(self.payload[key], getattr(book, key))
+
+    def test_update_book(self):
+        self.payload["title"] = "Book title put"
+        book = sample_book()
+
+        url = get_detail(book.id)
+
+        res = self.client.put(url, self.payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_delete_book(self):
+        book = sample_book()
+
+        url = get_detail(book.id)
+
+        res = self.client.delete(url, self.payload)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertNotIn(book, Book.objects.all())
