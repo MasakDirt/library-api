@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, AuthenticationFailed
@@ -5,6 +7,8 @@ from rest_framework.exceptions import ValidationError, AuthenticationFailed
 from books.models import Book
 from .models import Borrowing
 from books.serializers import BookSerializer
+from .validation import validate_borrowing
+
 
 class BorrowingReadSerializer(serializers.ModelSerializer):
     book = BookSerializer(read_only=True)
@@ -25,25 +29,19 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         model = Borrowing
         fields = ["id", "book", "expected_return_date", "actual_return_date"]
 
-    def validate(self, attrs):
-        borrow_date = attrs.get("borrow_date")
+    def validate(self, attrs) -> dict:
         expected_return_date = attrs.get("expected_return_date")
-        user = self.context["request"].user
-        if not user.is_authenticated or not user.is_active:
-            raise AuthenticationFailed(
-                "You must be an active authenticated user.")
-        if (
-                borrow_date
-                and expected_return_date
-                and expected_return_date < borrow_date
-        ):
-            raise serializers.ValidationError(
-                "Expected return date cannot be earlier than borrow date."
+
+        if expected_return_date is not None:
+            validate_borrowing(
+                borrow_date=datetime.date.today(),
+                expected_return_date=expected_return_date,
+                error_to_raise=serializers.ValidationError
             )
 
         return attrs
 
-    def create(self, validated_data):
+    def create(self, validated_data) -> Borrowing:
         with transaction.atomic():
             book_data = validated_data.pop("book")
             book = Book.objects.get(id=book_data.id)
