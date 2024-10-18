@@ -51,6 +51,37 @@ class UnAuthenticatedBookAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"], serializer.data)
 
+    def test_searching_book_by_author(self):
+        author = "Search"
+        sample_book(author=author)
+        sample_book(title="Test2", author=author, cover="HARD")
+        sample_book(title="Test3", inventory=11, author=author)
+        extra_book = sample_book(title="Test3", inventory=11)
+        author_search = author[:4]
+
+        response = self.client.get(BOOK_URL, data={"author": author_search})
+        books = Book.objects.filter(author__icontains=author_search)
+        self.assertNotIn(extra_book, books)
+        serializer = BookListSerializer(books, many=True)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"], serializer.data)
+
+    def test_searching_book_by_title(self):
+        extra_book = sample_book()
+        sample_book(title="Test2",cover="HARD")
+        sample_book(title="Test3")
+        sample_book(title="Test3", inventory=11)
+        title_search = "tes"
+
+        response = self.client.get(BOOK_URL, data={"title": title_search})
+        books = Book.objects.filter(title__icontains=title_search)
+        self.assertNotIn(extra_book, books)
+        serializer = BookListSerializer(books, many=True)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["results"], serializer.data)
+
     def test_book_detail(self) -> None:
         book = sample_book()
 
