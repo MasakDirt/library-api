@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -166,3 +166,6 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS512",
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
 }
+
+STRIPE_SECRET_KEY= os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY= os.getenv("STRIPE_PUBLISHABLE_KEY")
