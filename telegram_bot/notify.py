@@ -87,3 +87,12 @@ async def notify_borrowing_create(instance: Borrowing):
                 instance.expected_return_date.strftime(strdate),
             )
         )
+
+async def notify_overdue_borrowings(message: str) -> None:
+    """
+    Helper function to send a message to the specified Telegram chat.
+    """
+    bot = get_bot()
+
+    async with bot:
+        await bot.send_message(CHAT_ID, message,)
