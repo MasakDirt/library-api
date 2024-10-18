@@ -56,9 +56,9 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         detail=True,
         url_path="return-borrowings",
         url_name="return-borrowings",
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated, ),
     )
-    def return_borrowing(self, request: Request, pk: int=None) -> Response:
+    def return_borrowing(self, request: Request, pk: int = None) -> Response:
         """Endpoint for returning borrowing"""
         borrowing = get_object_or_404(Borrowing, pk=pk)
 
