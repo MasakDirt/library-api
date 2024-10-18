@@ -8,4 +8,4 @@ exclude =
     **migrations
     venv
     tests
-    library_api\settings.py
+    ./library_api/settings.py
