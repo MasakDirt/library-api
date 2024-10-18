@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -39,16 +39,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    #  3rd apps
+    # Third-party apps
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
     "django_celery_beat",
     "django_filters",
 
-    #  custom apps
-    "books",
+    # Custom apps
     "user",
+    "books",
     "borrowings",
     "payments",
 ]
@@ -173,3 +173,6 @@ CELERY_RESULT_BACKEND = "redis://localhost:6379"
 CELERY_TIMEZONE = "Europe/Kiev"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
+
+STRIPE_SECRET_KEY= os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY= os.getenv("STRIPE_PUBLISHABLE_KEY")
