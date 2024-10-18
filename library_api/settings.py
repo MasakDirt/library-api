@@ -26,7 +26,9 @@ SECRET_KEY = "django-insecure-&x_*#(%b#$er169f3fjegomba6p*f(uqr=m=l6uv4k9yeh$@86
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*",
+]
 
 
 # Application definition
@@ -176,3 +178,4 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 
 STRIPE_SECRET_KEY= os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY= os.getenv("STRIPE_PUBLISHABLE_KEY")
+ENDPOINT_SECRET_WEBHOOK = os.getenv("ENDPOINT_SECRET_WEBHOOK")
