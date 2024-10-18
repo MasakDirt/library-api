@@ -1,14 +1,14 @@
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 from django.db import transaction
 from datetime import date
 
-from books.models import Book
 from .models import Borrowing
 from .serializers import (
     BorrowingReadSerializer,
@@ -58,7 +58,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         url_name="return-borrowings",
         permission_classes=(IsAuthenticated,),
     )
-    def return_borrowing(self, request, pk=None):
+    def return_borrowing(self, request: Request, pk: int=None) -> Response:
         """Endpoint for returning borrowing"""
         borrowing = get_object_or_404(Borrowing, pk=pk)
 
