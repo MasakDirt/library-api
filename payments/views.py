@@ -1,14 +1,16 @@
 import stripe
 from django.conf import settings
+from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
 
 from payments.models import Payment
 from payments.serializers import (
     PaymentSerializer,
     PaymentListSerializer,
-    PaymentRetrieveSerializer
+    PaymentRetrieveSerializer,
 )
 
 
@@ -40,39 +42,74 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         if payment.status != Payment.StatusChoices.PENDING:
             return Response(
-                {"error": "Платёж уже завершён или не может быть оплачен"},
-                status=status.HTTP_400_BAD_REQUEST)
+                {"error": "Payment cannot be completed or already payed"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             stripe.api_key = settings.STRIPE_SECRET_KEY
             session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
-                line_items=[{
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {
-                            "name": f"Borrowing Payment for {payment.borrowing.book.title}",
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": "usd",
+                            "product_data": {
+                                "name": f"Borrowing Payment for "
+                                        f"{payment.borrowing.book.title}",
+                            },
+                            "unit_amount": int(payment.money_to_pay * 100),
                         },
-                        "unit_amount": int(payment.money_to_pay * 100),
-                        # Stripe принимает сумму в центах
-                    },
-                    "quantity": 1,
-                }],
+                        "quantity": 1,
+                    }
+                ],
                 mode="payment",
                 success_url="https://yourdomain.com/success",
                 cancel_url="https://yourdomain.com/cancel",
             )
 
-            # Сохраняем данные сессии в объекте Payment
             payment.session_id = session.id
             payment.session_url = session.url
             payment.save()
 
-            return Response({
-                "sessionId": session.id,
-                "sessionUrl": session.url
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"sessionId": session.id, "sessionUrl": session.url},
+                status=status.HTTP_200_OK,
+            )
 
         except Exception as e:
-            return Response({"error": str(e)},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+def handle_successful_payment(session):
+    payment = Payment.objects.get(session_id=session["id"])
+    payment.status = "Paid"
+    payment.save()
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+    endpoint_secret = settings.ENDPOINT_SECRET_WEBHOOK
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload,
+            sig_header,
+            endpoint_secret
+        )
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        print("session in webhook: ", session)
+        handle_successful_payment(session)
+
+    return JsonResponse({"status": "success"}, status=200)

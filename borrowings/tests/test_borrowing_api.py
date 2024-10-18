@@ -20,7 +20,10 @@ def get_detail(borrowings_id: int) -> str:
 
 
 def get_return_url(borrowings_id: int) -> str:
-    return reverse("borrowings:borrowings-return-borrowings", args=[borrowings_id])
+    return reverse(
+        "borrowings:borrowings-return-borrowings",
+        args=[borrowings_id]
+    )
 
 
 def sample_user(email, password):
