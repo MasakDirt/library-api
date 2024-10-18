@@ -13,7 +13,6 @@ from books.serializers import (
 )
 
 
-
 BOOK_URL = reverse("books:book-list")
 
 
