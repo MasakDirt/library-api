@@ -13,7 +13,6 @@ from books.serializers import (
 )
 
 
-
 BOOK_URL = reverse("books:book-list")
 
 
@@ -50,6 +49,28 @@ class UnAuthenticatedBookAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["results"], serializer.data)
+
+    def test_filter_books(self):
+        author = "Search"
+        title = "tes"
+        extra_book_title = sample_book(author=author)
+        sample_book(title="Test2", author=author, cover="HARD")
+        sample_book(title="Test3", inventory=11, author=author)
+        extra_book_author = sample_book(title="Test3", inventory=11)
+
+        for filter_field, filter_value, extra_book in [
+            ("title", title, extra_book_title),
+            ("author", author[:4], extra_book_author),
+        ]:
+            response = self.client.get(BOOK_URL, {filter_field: filter_value})
+            books = Book.objects.filter(
+                **{f"{filter_field}__icontains": filter_value}
+            )
+            self.assertNotIn(extra_book, books)
+            serializer = BookListSerializer(books, many=True)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data["results"], serializer.data)
 
     def test_book_detail(self) -> None:
         book = sample_book()
