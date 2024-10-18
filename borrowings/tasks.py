@@ -7,9 +7,6 @@ from telegram_bot.notify import notify_overdue_borrowings
 
 @shared_task
 def check_overdue_borrowings() -> None:
-    """
-    Task to check for overdue borrowings and send notifications to Telegram chat.
-    """
     overdue_borrowings = Borrowing.objects.filter(
         expected_return_date__lte=date.today(),
         actual_return_date__isnull=True
