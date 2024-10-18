@@ -19,6 +19,10 @@ def get_detail(borrowings_id: int) -> str:
     return reverse("borrowings:borrowings-detail", args=[borrowings_id])
 
 
+def get_return_url(borrowings_id: int) -> str:
+    return reverse("borrowings:borrowings-return-borrowings", args=[borrowings_id])
+
+
 def sample_user(email, password):
     return get_user_model().objects.create_user(email, password)
 
@@ -260,3 +264,43 @@ class AdminBorrowingTests(TestCase):
             len(response.data["results"]),
             Borrowing.objects.filter(user_id=self.user_2.id).count()
         )
+
+
+class ReturnBorrowingsTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            email="test@test.com",
+            password="password"
+        )
+        self.user_2 = sample_user(
+            email="test1@test1.com",
+            password="password"
+        )
+        self.book = sample_book()
+        self.borrowing= sample_borrowing(user=self.user, book=self.book)
+        self.borrowing_user_2 = sample_borrowing(user=self.user_2, book=self.book)
+        self.client = APIClient()
+        self.client.force_authenticate(self.user_2)
+
+    def test_return_borrowings(self):
+        book_inventory = self.book.inventory
+        response = self.client.post(get_return_url(self.borrowing_user_2.id))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(response.data["actual_return_date"], str(date.today()))
+
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.inventory, book_inventory + 1)
+
+    def test_return_borrowings_forbidden(self):
+        response = self.client.post(get_return_url(self.borrowing.id))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_already_returned_borrowings(self):
+        self.client.post(get_return_url(self.borrowing_user_2.id))
+
+        response = self.client.post(get_return_url(self.borrowing_user_2.id))
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
