@@ -267,7 +267,8 @@ class AdminBorrowingTests(TestCase):
 
 
 class ReturnBorrowingsTest(TestCase):
-    def setUp(self):
+    @patch("borrowings.signals.notify_borrowing_create")
+    def setUp(self, mocked_notify):
         self.user = get_user_model().objects.create_superuser(
             email="test@test.com",
             password="password"
@@ -277,8 +278,11 @@ class ReturnBorrowingsTest(TestCase):
             password="password"
         )
         self.book = sample_book()
-        self.borrowing= sample_borrowing(user=self.user, book=self.book)
-        self.borrowing_user_2 = sample_borrowing(user=self.user_2, book=self.book)
+        self.borrowing = sample_borrowing(user=self.user, book=self.book)
+        self.borrowing_user_2 = sample_borrowing(
+            user=self.user_2,
+            book=self.book
+        )
         self.client = APIClient()
         self.client.force_authenticate(self.user_2)
 
