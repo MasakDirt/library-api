@@ -1,6 +1,13 @@
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
+from django.db import transaction
+from datetime import date
 
 from .models import Borrowing
 from .serializers import (
@@ -37,10 +44,45 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             if not self.request.user.is_staff:
                 return BorrowingReadAuthenticatedSerializer
             serializer = BorrowingReadSerializer
+        if self.action == "return_borrowings":
+            serializer = BorrowingReadSerializer
         return serializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="return-borrowings",
+        url_name="return-borrowings",
+        permission_classes=(IsAuthenticated,),
+    )
+    def return_borrowing(self, request: Request, pk: int=None) -> Response:
+        """Endpoint for returning borrowing"""
+        borrowing = get_object_or_404(Borrowing, pk=pk)
+
+        if borrowing.actual_return_date:
+            return Response(
+                {"detail": "This borrowing has already been returned."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if borrowing.user_id != self.request.user.id:
+            return Response(
+                {"detail": "This is not your borrowing."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        with transaction.atomic():
+            borrowing.book.inventory += 1
+            borrowing.book.save()
+
+            borrowing.actual_return_date = date.today()
+            borrowing.save()
+
+        serializer = self.get_serializer(borrowing)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         parameters=[
