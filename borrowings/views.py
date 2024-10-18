@@ -40,9 +40,6 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self) -> Type[
-        BorrowingReadSerializer | BorrowingCreateSerializer
-        ]:
     def get_serializer_class(self):
         serializer = super().get_serializer_class()
         if self.action in ["list", "retrieve"]:
