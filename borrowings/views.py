@@ -1,3 +1,5 @@
+from typing import Type
+
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -48,7 +50,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             serializer = BorrowingReadSerializer
         return serializer
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
 
     @action(

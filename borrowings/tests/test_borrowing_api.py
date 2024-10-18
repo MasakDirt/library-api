@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 
 from books.models import Book
 from borrowings.models import Borrowing
-
+from borrowings.tasks import check_overdue_borrowings
 
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 
@@ -308,3 +308,19 @@ class ReturnBorrowingsTest(TestCase):
         response = self.client.post(get_return_url(self.borrowing_user_2.id))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class OverdueBorrowingTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="overdue@test.com",
+            password="password"
+        )
+        self.book = sample_book()
+
+    @patch("borrowings.tasks.notify_overdue_borrowings")
+    def test_no_overdue_borrowings(self, mocked_notify):
+        check_overdue_borrowings()
+        mocked_notify.assert_called_once_with(
+            "There are no borrowings overdue today!"
+        )

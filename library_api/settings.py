@@ -39,15 +39,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party apps
+    #  3rd apps
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "django_celery_beat",
     "django_filters",
 
-    # Custom apps
-    "user",
+    #  custom apps
     "books",
+    "user",
     "borrowings",
     "payments",
 ]
@@ -166,3 +167,9 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS512",
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
 }
+
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
+CELERY_TIMEZONE = "Europe/Kiev"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
