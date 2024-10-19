@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.contrib.auth.models import User
+
 from books.models import Book
 from borrowings.validation import validate_borrowing
 
@@ -10,12 +13,10 @@ class Borrowing(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="borrowings"
+        related_name="borrowings",
     )
     book = models.ForeignKey(
-        Book,
-        on_delete=models.CASCADE,
-        related_name="borrowings"
+        Book, on_delete=models.CASCADE, related_name="borrowings"
     )
     borrow_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
@@ -24,25 +25,17 @@ class Borrowing(models.Model):
     def __str__(self) -> str:
         return f"{self.user.email} borrowed {self.book.title}"
 
+    def calculate_money_to_pay(self) -> Decimal:
+        days = Decimal((self.expected_return_date - self.borrow_date).days)
+        daily_fee = Decimal(self.book.daily_fee)
+
+        return (days * daily_fee).quantize(Decimal("0.01"))
+
     def clean(self) -> None:
         validate_borrowing(
-            self.borrow_date,
-            self.expected_return_date,
-            ValidationError
+            self.borrow_date, self.expected_return_date, ValidationError
         )
 
-    def save(
-            self, *args,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
-    ) -> None:
+    def save(self, *args, **kwargs) -> None:
         self.full_clean()
-        return super().save(
-            *args,
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
+        return super().save(*args, **kwargs)
