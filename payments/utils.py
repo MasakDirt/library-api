@@ -8,9 +8,14 @@ from payments.models import Payment
 FINE_MULTIPLIER = 2
 
 
-def create_stripe_session(borrowing: Borrowing, borrowing_type: str = "Payment"):
+def create_stripe_session(
+        borrowing: Borrowing,
+        borrowing_type: str = "Payment"
+):
     if borrowing_type == "Fine":
-        borrowing_price = int(borrowing.calculate_money_to_fine() * 100) * FINE_MULTIPLIER
+        borrowing_price = int(
+            borrowing.calculate_money_to_fine() * 100
+        ) * FINE_MULTIPLIER
     else:
         borrowing_price = int(borrowing.calculate_money_to_pay() * 100)
 
