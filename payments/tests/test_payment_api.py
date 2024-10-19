@@ -8,10 +8,9 @@ from rest_framework.test import APIClient
 
 from books.models import Book
 from borrowings.models import Borrowing
-from payments.models import Payment
 from payments.serializers import (
     PaymentListSerializer,
-    PaymentRetrieveSerializer
+    PaymentRetrieveSerializer,
 )
 from payments.views import PaymentViewSet
 
@@ -25,17 +24,27 @@ def get_detail(payment_id: int) -> str:
     return reverse("payments:payment-detail", args=[payment_id])
 
 
+class SessionStripe:
+    def __init__(self, id: str, url: str) -> None:
+        self.id = id
+        self.url = url
+
+
 class PaymentAPITests(TestCase):
+
+    @patch("stripe.checkout.Session.create")
     @patch("borrowings.signals.notify_borrowing_create")
-    def setUp(self, mocked_notify):
+    def setUp(self, mocked_notify, mock_create_session):
+        mock_create_session.return_value = SessionStripe(
+            id="fake_session_id", url="https://fake-stripe-url.com"
+        )
+
         self.client = APIClient()
         self.user = User.objects.create_user(
-            email="user@test.com",
-            password="test1234"
+            email="user@test.com", password="test1234"
         )
         self.admin_user = User.objects.create_superuser(
-            email="admin@test.com",
-            password="test1234"
+            email="admin@test.com", password="test1234"
         )
 
         self.book = Book.objects.create(
@@ -43,36 +52,19 @@ class PaymentAPITests(TestCase):
             author="Author Name",
             cover="HARD",
             inventory=10,
-            daily_fee=5.00
+            daily_fee=5.00,
         )
         self.borrowing1 = Borrowing.objects.create(
             book=self.book,
             user=self.user,
             borrow_date="2024-10-01",
-            expected_return_date="2024-10-10"
+            expected_return_date="2024-10-10",
         )
         self.borrowing2 = Borrowing.objects.create(
             book=self.book,
             user=self.admin_user,
             borrow_date="2023-10-01",
-            expected_return_date="2023-10-10"
-        )
-
-        self.payment1 = Payment.objects.create(
-            status="PENDING",
-            type="PAYMENT",
-            borrowing=self.borrowing1,
-            session_url="https://stripe.com/payment/1",
-            session_id="session_1",
-            money_to_pay=50.00
-        )
-        self.payment2 = Payment.objects.create(
-            status="PAID",
-            type="FINE",
-            borrowing=self.borrowing2,
-            session_url="https://stripe.com/payment/2",
-            session_id="session_2",
-            money_to_pay=10.00
+            expected_return_date="2023-10-10",
         )
 
     def test_list_payments_user(self):
@@ -83,6 +75,7 @@ class PaymentAPITests(TestCase):
         self.assertEqual(len(response.data["results"]), 1)
 
     def test_list_payments_admin(self):
+
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(PAYMENT_URL)
 
@@ -94,8 +87,7 @@ class PaymentViewSetTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            email="user@test.com",
-            password="test1234"
+            email="user@test.com", password="test1234"
         )
         self.client.force_authenticate(self.user)
         self.view = PaymentViewSet()
