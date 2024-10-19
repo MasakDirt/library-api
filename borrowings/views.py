@@ -1,5 +1,3 @@
-from typing import Type
-
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -11,19 +9,22 @@ from rest_framework.response import Response
 from django.db import transaction
 from datetime import date
 
+from common.serializers import BorrowingListRetrieveSerializer
 from payments.utils import create_fine
 from .models import Borrowing
 from .serializers import (
-    BorrowingReadSerializer,
-    BorrowingCreateSerializer,
-    BorrowingReadAuthenticatedSerializer,
+    BorrowingSerializer,
+    BorrowingRetrieveAdminSerializer,
+    BorrowingListSerializer,
+    BorrowingListAdminSerializer,
+    BorrowingRetrieveSerializer,
 )
 
 
 class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.select_related("book", "user")
     permission_classes = (IsAuthenticated,)
-    serializer_class = BorrowingCreateSerializer
+    serializer_class = BorrowingSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -43,12 +44,17 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         serializer = super().get_serializer_class()
-        if self.action in ["list", "retrieve"]:
+        if self.action == "list":
             if not self.request.user.is_staff:
-                return BorrowingReadAuthenticatedSerializer
-            serializer = BorrowingReadSerializer
+                return BorrowingListSerializer
+            serializer = BorrowingListAdminSerializer
+        if self.action == "retrieve":
+            if not self.request.user.is_staff:
+                return BorrowingRetrieveAdminSerializer
+            return BorrowingRetrieveSerializer
+
         if self.action == "return_borrowings":
-            serializer = BorrowingReadSerializer
+            serializer = BorrowingListRetrieveSerializer
         return serializer
 
     def perform_create(self, serializer) -> None:

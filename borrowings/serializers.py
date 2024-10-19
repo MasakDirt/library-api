@@ -6,31 +6,44 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from books.models import Book
-from .models import Borrowing
-from books.serializers import BookRetrieveSerializer
 from borrowings.validation import validate_borrowing
+from payments.serializers import (
+    PaymentReadListSerializer,
+    PaymentReadRetrieveSerializer,
+)
+from .models import Borrowing
 
 
-class BorrowingReadSerializer(serializers.ModelSerializer):
-    book = BookRetrieveSerializer(read_only=True)
+class BorrowingListSerializer(serializers.ModelSerializer):
+    book = serializers.CharField(source="book.title", read_only=True)
+    payments = PaymentReadListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrowing
-        fields = [
+        fields = (
             "id",
-            "user",
             "book",
             "borrow_date",
             "expected_return_date",
-            "actual_return_date"
-        ]
+            "actual_return_date",
+            "payments"
+        )
 
 
-class BorrowingCreateSerializer(serializers.ModelSerializer):
+class BorrowingListAdminSerializer(BorrowingListSerializer):
+    payments = PaymentReadListSerializer(many=True, read_only=True)
+    user_id = serializers.CharField(source="user.id", read_only=True)
+
     class Meta:
         model = Borrowing
-        fields = ["id", "book", "expected_return_date", "actual_return_date"]
+        fields = BorrowingListSerializer.Meta.fields + ("user_id",)
 
+
+class BorrowingRetrieveSerializer(BorrowingListAdminSerializer):
+    payments = PaymentReadRetrieveSerializer(many=True, read_only=True)
+
+
+class BorrowingSerializer(serializers.ModelSerializer):
     def validate(self, attrs) -> dict:
         expected_return_date = attrs.get("expected_return_date")
         if expected_return_date is not None:
@@ -54,8 +67,21 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             book.save()
         return borrowing
 
-
-class BorrowingReadAuthenticatedSerializer(BorrowingReadSerializer):
     class Meta:
         model = Borrowing
-        exclude = ["user"]
+        fields = ("id", "book", "expected_return_date", "actual_return_date")
+
+
+class BorrowingRetrieveAdminSerializer(
+    BorrowingRetrieveSerializer
+):
+    class Meta:
+        model = Borrowing
+        fields = (
+            "id",
+            "book",
+            "payments",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date"
+        )
