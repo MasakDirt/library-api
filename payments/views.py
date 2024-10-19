@@ -59,8 +59,9 @@ def stripe_webhook(request):
         return JsonResponse({"error": str(e)}, status=400)
 
     if event["type"] == "checkout.session.completed":
+
         session = event["data"]["object"]
-        print("session in webhook: ", session)
+        print(session)
         handle_successful_payment(session)
 
     return JsonResponse({"status": "success"}, status=200)

@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.db import transaction
 from datetime import date
 
+from payments.utils import create_fine
 from .models import Borrowing
 from .serializers import (
     BorrowingReadSerializer,
@@ -82,6 +83,11 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
             borrowing.actual_return_date = date.today()
             borrowing.save()
+
+            if (
+                borrowing.actual_return_date - borrowing.expected_return_date
+            ).days > 0:
+                create_fine(borrowing)
 
         serializer = self.get_serializer(borrowing)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import models
-
+from django.contrib.auth.models import User
 from books.models import Book
 from borrowings.validation import validate_borrowing
 
@@ -16,7 +16,9 @@ class Borrowing(models.Model):
         related_name="borrowings",
     )
     book = models.ForeignKey(
-        Book, on_delete=models.CASCADE, related_name="borrowings"
+        Book,
+        on_delete=models.CASCADE,
+        related_name="borrowings"
     )
     borrow_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
@@ -31,9 +33,21 @@ class Borrowing(models.Model):
 
         return (days * daily_fee).quantize(Decimal("0.01"))
 
+    def calculate_money_to_fine(self) -> Decimal:
+        days = Decimal(
+            (date.today() - self.expected_return_date)
+            .days
+        )
+        print("days in calculate_money_to_fine: ", days)
+        daily_fee = Decimal(self.book.daily_fee)
+
+        return (days * daily_fee).quantize(Decimal("0.01"))
+
     def clean(self) -> None:
         validate_borrowing(
-            self.borrow_date, self.expected_return_date, ValidationError
+            self.borrow_date,
+            self.expected_return_date,
+            ValidationError
         )
 
     def save(self, *args, **kwargs) -> None:
