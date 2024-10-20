@@ -30,6 +30,11 @@ ALLOWED_HOSTS = [
     "*",
 ]
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+    "localhost",
+]
+
 
 # Application definition
 
@@ -47,6 +52,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_celery_beat",
     "django_filters",
+    "debug_toolbar",
 
     # Custom apps
     "user",
@@ -57,6 +63,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -101,6 +108,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "library_api.paginations.LibraryLimitOffsetPagination",
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
@@ -176,6 +184,8 @@ CELERY_TIMEZONE = "Europe/Kiev"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
-STRIPE_SECRET_KEY= os.getenv("STRIPE_SECRET_KEY")
-STRIPE_PUBLISHABLE_KEY= os.getenv("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
 ENDPOINT_SECRET_WEBHOOK = os.getenv("ENDPOINT_SECRET_WEBHOOK")
+
+SITE_URL = "http://localhost:8000/"

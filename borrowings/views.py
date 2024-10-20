@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -10,7 +9,7 @@ from django.db import transaction
 from datetime import date
 
 from common.serializers import BorrowingListRetrieveSerializer
-from payments.utils import create_fine
+from payments.utils import create_payment_with_session
 from .models import Borrowing
 from .serializers import (
     BorrowingSerializer,
@@ -23,7 +22,6 @@ from .serializers import (
 
 class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.select_related("book", "user")
-    permission_classes = (IsAuthenticated,)
     serializer_class = BorrowingSerializer
 
     def get_queryset(self):
@@ -31,6 +29,9 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         is_active = self.request.query_params.get("is_active")
         user_id = self.request.query_params.get("user_id")
         user = self.request.user
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("payments")
 
         if not user.is_staff:
             queryset = queryset.filter(user=self.request.user)
@@ -51,7 +52,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             if not self.request.user.is_staff:
                 return BorrowingRetrieveAdminSerializer
-            return BorrowingRetrieveSerializer
+            serializer = BorrowingRetrieveSerializer
 
         if self.action == "return_borrowings":
             serializer = BorrowingListRetrieveSerializer
@@ -65,7 +66,6 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         detail=True,
         url_path="return-borrowings",
         url_name="return-borrowings",
-        permission_classes=(IsAuthenticated, ),
     )
     def return_borrowing(self, request: Request, pk: int = None) -> Response:
         """Endpoint for returning borrowing"""
@@ -93,7 +93,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             if (
                 borrowing.actual_return_date - borrowing.expected_return_date
             ).days > 0:
-                create_fine(borrowing)
+                create_payment_with_session(borrowing, borrowing_type="Fine")
 
         serializer = self.get_serializer(borrowing)
         return Response(serializer.data, status=status.HTTP_200_OK)
