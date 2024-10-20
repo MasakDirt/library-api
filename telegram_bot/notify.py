@@ -74,22 +74,18 @@ def get_bot() -> Bot:
 
 
 async def notify_borrowing_create(instance: Borrowing):
-    bot = get_bot()
     strdate = "%d %B %y"
-
-    async with bot:
-        await bot.send_message(
-            CHAT_ID,
-            random.choice(MESSAGES).format(
-                instance.user.email,
-                instance.book.title,
-                instance.borrow_date.strftime(strdate),
-                instance.expected_return_date.strftime(strdate),
-            )
+    await telegram_send_message(
+        random.choice(MESSAGES).format(
+            instance.user.email,
+            instance.book.title,
+            instance.borrow_date.strftime(strdate),
+            instance.expected_return_date.strftime(strdate),
         )
+    )
 
 
-async def notify_overdue_borrowings(message: str) -> None:
+async def telegram_send_message(message: str) -> None:
     """
     Helper function to send a message to the specified Telegram chat.
     """
