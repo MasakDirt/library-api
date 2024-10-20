@@ -1,10 +1,15 @@
 from rest_framework import serializers
 
+from borrowings.models import Borrowing
 from common.serializers import BorrowingListRetrieveSerializer
 from payments.models import Payment
 
 
 class PaymentSerializer(serializers.ModelSerializer):
+    borrowing = serializers.PrimaryKeyRelatedField(
+        queryset=Borrowing.objects.select_related("user", "book")
+    )
+
     class Meta:
         model = Payment
         fields = (
