@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from borrowings.models import Borrowing
-from payments.utils import create_payment
+from payments.utils import create_payment_with_session
 from telegram_bot.notify import notify_borrowing_create
 
 
@@ -17,4 +17,4 @@ def borrowing_created(
     if created:
         asyncio.run(notify_borrowing_create(instance))
 
-        create_payment(instance)
+        create_payment_with_session(instance)
