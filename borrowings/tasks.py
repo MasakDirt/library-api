@@ -2,7 +2,7 @@ import asyncio
 from datetime import date
 from celery import shared_task
 from borrowings.models import Borrowing
-from telegram_bot.notify import notify_overdue_borrowings
+from telegram_bot.notify import telegram_send_message
 
 
 @shared_task
@@ -19,8 +19,8 @@ def check_overdue_borrowings() -> None:
                 f"Borrow Date: {borrowing.borrow_date}\n"
                 f"Expected Return Date: {borrowing.expected_return_date}\n"
             )
-            asyncio.run(notify_overdue_borrowings(message))
+            asyncio.run(telegram_send_message(message))
     else:
-        asyncio.run(notify_overdue_borrowings(
+        asyncio.run(telegram_send_message(
             "There are no borrowings overdue today!")
         )
