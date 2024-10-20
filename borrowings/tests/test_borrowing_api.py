@@ -6,11 +6,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from books.models import Book
 from borrowings.models import Borrowing
-
+from payments.models import Payment
 
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 
@@ -314,3 +315,25 @@ class ReturnBorrowingsTest(TestCase):
         response = self.client.post(get_return_url(self.borrowing_user_2.id))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_creating_payment_after_borrowing(self):
+        borrowing = sample_borrowing(user=self.user, book=self.book)
+
+        self.assertEqual(Payment.objects.count(), 3)
+        self.assertEqual(
+            Payment.objects.order_by("-id").first().money_to_pay,
+            borrowing.book.daily_fee
+            * Decimal((borrowing.expected_return_date - date.today()).days)
+            * 100
+        )
+
+    def test_creating_fine_after_overdue(self):
+
+        borrowing = sample_borrowing(
+            user=self.user_2,
+            book=self.book,
+            expected_return_date=date.today() - timedelta(days=3)
+        )
+
+        with self.assertRaises(ValidationError):
+            self.client.post(get_return_url(borrowing.id))
