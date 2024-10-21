@@ -28,8 +28,8 @@ def check_overdue_borrowings() -> None:
     async def send_overdue():
         async with httpx.AsyncClient() as client:
             await client.post(
-                "http://localhost:8001/notify/",
-                json=message
+                "http://localhost:8001/overdue/",
+                json={"message": message}
             )
 
     asyncio.run(send_overdue())

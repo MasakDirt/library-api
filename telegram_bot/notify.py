@@ -96,7 +96,11 @@ async def notify_borrowing(data: BorrowingData):
     return {"status": "success", "message": message}
 
 
+class MessageData(BaseModel):
+    message: str
+
+
 @app.post("/overdue/")
-async def notify_overdue_borrowing(message: str):
-    await send_telegram_message(message)
-    return {"status": "success", "message": message}
+async def notify_overdue_borrowing(message_data: MessageData):
+    await send_telegram_message(message_data.message)
+    return {"status": "success", "message": message_data.message}
