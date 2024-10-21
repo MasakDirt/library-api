@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -45,9 +45,13 @@ def sample_book(**additional) -> Book:
 
 
 @patch("stripe.checkout.Session.create")
-@patch("borrowings.signals.notify_borrowing_create")
+@patch("httpx.AsyncClient.post", new_callable=AsyncMock)
 def sample_borrowing(
-    mocked_notify, mock_create_session, user, book, **additional
+    mocked_notify,
+    mock_create_session,
+    user,
+    book,
+    **additional
 ) -> Borrowing:
     mock_create_session.return_value = SessionStripe(
         id="fake_session_id", url="https://fake-stripe-url.com"
@@ -85,7 +89,7 @@ class BorrowingTests(TestCase):
         self.borrowing = sample_borrowing(user=self.user, book=self.book)
 
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_create_borrowing(self, mocked_notify, mock_create_session):
         data = {
             "book": self.book.id,
@@ -101,21 +105,21 @@ class BorrowingTests(TestCase):
         self.assertEqual(Borrowing.objects.count(), 2)
         self.assertEqual(Borrowing.objects.first().user, self.user)
 
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_list_borrowings(self, mocked_notify):
 
         response = self.client.get(BORROWINGS_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
 
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_borrowing_detail(self, mocked_notify):
 
         response = self.client.get(get_detail(self.borrowing.id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.borrowing.id)
 
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_return_borrowing(self, mocked_notify):
         borrowing = sample_borrowing(
             user=self.user,
@@ -134,7 +138,7 @@ class BorrowingTests(TestCase):
         self.assertEqual(borrowing.actual_return_date, date.today())
 
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_inventory_decrease_on_borrow(
         self, mocked_notify, mock_create_session
     ):
@@ -168,7 +172,7 @@ class UnAuthenticatedBorrowingTests(TestCase):
 
 
 class AuthenticatedBorrowingTests(TestCase):
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def setUp(self, mocked_notify):
         self.user = sample_user(email="test@test.com", password="password")
         self.user_2 = sample_user(email="test1@test1.com", password="password")
@@ -199,7 +203,7 @@ class AuthenticatedBorrowingTests(TestCase):
         self.assertIsNone(response.data.get("user"))
 
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_create_user_borrowings_and_notification_send(
         self, mocked_notify, mock_create_session
     ):
@@ -225,11 +229,19 @@ class AuthenticatedBorrowingTests(TestCase):
         self.assertEqual(
             payload["actual_return_date"], borrowing.actual_return_date
         )
-        self.assertTrue(mocked_notify.called)
+        mocked_notify.assert_called_once_with(
+            "http://localhost:8001/notify/",
+            json={
+                "user_email": borrowing.user.email,
+                "book_title": borrowing.book.title,
+                "borrow_date": str(borrowing.borrow_date),
+                "expected_return_date": str(borrowing.expected_return_date),
+            }
+        )
 
 
 class AdminBorrowingTests(TestCase):
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def setUp(self, mocked_notify):
         self.user = get_user_model().objects.create_superuser(
             email="test@test.com", password="password"
@@ -254,7 +266,7 @@ class AdminBorrowingTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def test_list_filter_is_active_borrowings(self, mocked_notify):
         sample_borrowing(
             user=self.user_2,

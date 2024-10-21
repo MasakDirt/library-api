@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import stripe
 from django.contrib.auth import get_user_model
@@ -56,7 +56,7 @@ class SuccessSessionTest:
 class PaymentAPITests(TestCase):
 
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def setUp(self, mocked_notify, mock_create_session):
         mock_create_session.return_value = SessionStripe(
             id="fake_session_id",
@@ -132,7 +132,7 @@ class PaymentViewSetTests(TestCase):
 
 class PaymentSuccessCancelTests(TestCase):
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def setUp(self, mocked_notify, mock_create_session):
         mock_create_session.return_value = SessionStripe(
             id="fake_session_id",
@@ -203,7 +203,7 @@ class PaymentSuccessCancelTests(TestCase):
 
 class PaymentCancelTests(TestCase):
     @patch("stripe.checkout.Session.create")
-    @patch("borrowings.signals.notify_borrowing_create")
+    @patch("httpx.AsyncClient.post", new_callable=AsyncMock)
     def setUp(self, mocked_notify, mock_create_session):
         mock_create_session.return_value = SessionStripe(
             id="fake_session_id",

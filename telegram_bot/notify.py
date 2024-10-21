@@ -2,9 +2,9 @@ import os
 import random
 
 from dotenv import load_dotenv
+from fastapi import FastAPI
+from pydantic import BaseModel
 from telegram import Bot
-
-from borrowings.models import Borrowing
 
 
 load_dotenv()
@@ -68,28 +68,35 @@ Happy reading and don't miss the return date! 🔖
     """
 ]
 
+bot = Bot(token=TOKEN)
 
-def get_bot() -> Bot:
-    return Bot(token=TOKEN)
+app = FastAPI()
 
 
-async def notify_borrowing_create(instance: Borrowing):
-    strdate = "%d %B %y"
-    await telegram_send_message(
-        random.choice(MESSAGES).format(
-            instance.user.email,
-            instance.book.title,
-            instance.borrow_date.strftime(strdate),
-            instance.expected_return_date.strftime(strdate),
-        )
+class BorrowingData(BaseModel):
+    user_email: str
+    book_title: str
+    borrow_date: str
+    expected_return_date: str
+
+
+async def send_telegram_message(message: str):
+    await bot.send_message(CHAT_ID, message)
+
+
+@app.post("/notify/")
+async def notify_borrowing(data: BorrowingData):
+    message = random.choice(MESSAGES).format(
+        data.user_email,
+        data.book_title,
+        data.borrow_date,
+        data.expected_return_date
     )
+    await send_telegram_message(message)
+    return {"status": "success", "message": message}
 
 
-async def telegram_send_message(message: str) -> None:
-    """
-    Helper function to send a message to the specified Telegram chat.
-    """
-    bot = get_bot()
-
-    async with bot:
-        await bot.send_message(CHAT_ID, message,)
+@app.post("/overdue/")
+async def notify_overdue_borrowing(message: str):
+    await send_telegram_message(message)
+    return {"status": "success", "message": message}

@@ -1,8 +1,9 @@
 import asyncio
 from datetime import date
+
+import httpx
 from celery import shared_task
 from borrowings.models import Borrowing
-from telegram_bot.notify import telegram_send_message
 
 
 @shared_task
@@ -11,6 +12,8 @@ def check_overdue_borrowings() -> None:
         expected_return_date__lte=date.today(),
         actual_return_date__isnull=True
     )
+
+    message = ""
     if overdue_borrowings.exists():
         for borrowing in overdue_borrowings:
             message = (
@@ -19,8 +22,14 @@ def check_overdue_borrowings() -> None:
                 f"Borrow Date: {borrowing.borrow_date}\n"
                 f"Expected Return Date: {borrowing.expected_return_date}\n"
             )
-            asyncio.run(telegram_send_message(message))
     else:
-        asyncio.run(telegram_send_message(
-            "There are no borrowings overdue today!")
-        )
+        message = "There are no borrowings overdue today!"
+
+    async def send_overdue():
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                "http://localhost:8001/notify/",
+                json=message
+            )
+
+    asyncio.run(send_overdue())
