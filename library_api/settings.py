@@ -31,15 +31,17 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", False)
 
-ALLOWED_HOSTS = [
-    "*",
-]
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS", default="localhost")
+
+if allowed_hosts_env == "*":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = allowed_hosts_env.split(",")
 
 INTERNAL_IPS = [
     "127.0.0.1",
     "localhost",
 ]
-
 
 # Application definition
 
