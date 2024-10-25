@@ -21,7 +21,7 @@ jobs:
 
       - name: Load environment variables
         env:
-          ENV_FILE_PATH: .env
+          ENV_FILE_PATH: .env.sample
         run: |
           if [ -f "$ENV_FILE_PATH" ]; then
             export $(grep -v '^#' "$ENV_FILE_PATH" | xargs)
