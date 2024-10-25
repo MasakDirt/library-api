@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
-from user.models import User
 from user.serializers import UserSerializer
+
+
+User = get_user_model()
 
 
 class UserTests(TestCase):
