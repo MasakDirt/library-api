@@ -43,7 +43,6 @@ INTERNAL_IPS = [
     "localhost",
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
