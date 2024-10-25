@@ -19,14 +19,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Load environment variables
-        env:
-          ENV_FILE_PATH: .env.sample
-        run: |
-          if [ -f "$ENV_FILE_PATH" ]; then
-            export $(grep -v '^#' "$ENV_FILE_PATH" | xargs)
-          fi
-
       - name: Install requirements
         run: |
           python -m pip install --upgrade pip
