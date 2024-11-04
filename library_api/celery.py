@@ -13,7 +13,9 @@ if platform.system() == "Windows":
     app.conf.worker_pool = "solo"
 
 app.config_from_object("django.conf:settings", namespace="CELERY")
-app.conf.result_backend = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0"
+app.conf.result_backend = (
+    f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0"
+)
 
 app.autodiscover_tasks()
 
