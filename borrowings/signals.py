@@ -1,3 +1,4 @@
+import os
 import asyncio
 from typing import Type
 
@@ -5,9 +6,13 @@ import httpx
 from django.db.models import Model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from dotenv import load_dotenv
 
 from borrowings.models import Borrowing
 from payments.utils import create_payment_with_session
+
+
+load_dotenv()
 
 
 @receiver(post_save, sender=Borrowing)
@@ -30,7 +35,8 @@ def borrowing_created(
         async def send_notification():
             async with httpx.AsyncClient() as client:
                 await client.post(
-                    "http://localhost:8001/notify/",
+                    f"http://{os.getenv('TELEGRAM_BOT_HOST')}:"
+                    f"{os.getenv('TELEGRAM_BOT_PORT')}/notify/",
                     json=borrowing_data
                 )
 
