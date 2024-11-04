@@ -1,3 +1,4 @@
+import os
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch, AsyncMock
@@ -230,7 +231,8 @@ class AuthenticatedBorrowingTests(TestCase):
             payload["actual_return_date"], borrowing.actual_return_date
         )
         mocked_notify.assert_called_once_with(
-            "http://localhost:8001/notify/",
+            f"http://{os.getenv('TELEGRAM_BOT_HOST')}:"
+            f"{os.getenv('TELEGRAM_BOT_PORT')}/notify/",
             json={
                 "user_email": borrowing.user.email,
                 "book_title": borrowing.book.title,

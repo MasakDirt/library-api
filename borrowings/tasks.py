@@ -1,9 +1,15 @@
 import asyncio
+import os
 from datetime import date
 
 import httpx
 from celery import shared_task
+from dotenv import load_dotenv
+
 from borrowings.models import Borrowing
+
+
+load_dotenv()
 
 
 @shared_task
@@ -28,7 +34,8 @@ def check_overdue_borrowings() -> None:
     async def send_overdue():
         async with httpx.AsyncClient() as client:
             await client.post(
-                "http://localhost:8001/overdue/",
+                f"http://{os.getenv('TELEGRAM_BOT_HOST')}:"
+                f"{os.getenv('TELEGRAM_BOT_PORT')}/overdue/",
                 json={"message": message}
             )
 
